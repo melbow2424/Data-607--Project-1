@@ -1,0 +1,118 @@
+---
+title: "Data 607 Project 1"
+author: "Melissa Bowman"
+date: "2022-09-25"
+output: html_document
+---
+
+In Project 1 for Data 607, a text file is given with chess tournament results. In the assignment, the text file had to first be transformed organized data that can then be made into a .csv file.
+
+Load libraries.
+```{r libraries}
+library(RCurl)
+library(dplyr)
+library(stringr)
+library(tidyverse)
+
+```
+Reading from a url text file.  
+
+```{r uploading text file}
+url <- "https://raw.githubusercontent.com/melbow2424/Data-607--Project-1/main/tournamentinfo.txt"
+tournament <- read_tsv(url)
+print(tournament)
+```
+
+Here, I went from text file info right into finding the info needed for the .csv file.
+
+Had to un-list the regex pattern due to the fact that when they are added to the data frame, the list info is printed as header info.
+
+```{r isolating value for Data Frame}
+#Getting State: 
+url_state <- str_extract_all(tournament, "([A-Z][A-Z])\\s\\|")
+#print(url_state) Test
+#Unlist State to place in DataFrame 
+state = unlist(url_state)
+#print(state) Test
+
+#Getting Total Number of Points:
+url_points <- str_extract_all(tournament, "\\d\\.\\d")
+#print(url_points) Test
+#Unlist Points to place in DataFrame 
+points = unlist(url_points)
+#print(points)
+
+#Getting  Player’s Pre-Rating
+url_rating <- str_extract_all(tournament, "R.\\s+\\d+")
+#print(state_rate_cleaning)
+#Unlist Ratings to place in DataFrame
+rating = unlist(url_rating)
+#print(rating)
+
+```
+To isolate the names with a type length of 64 required more data extraction and removal then the other info needed in the csv file.
+
+```{r}
+#Getting Player Name Only: 
+#Trying to remove patterns from a list with string elements
+url_extract <- str_extract_all(tournament, "(\\s[A-Z]+\\s[A-Z]+)?((\\s|-)[A-Z]+)?(\\s|-)[A-Z]+")
+#print(url_extract) Testing
+x = unlist(url_extract)
+#print(x) Test
+
+remove_url <- str_remove(x, pattern = " R")
+remove_url_P <- str_remove(remove_url, pattern = " P")
+remove_url_N <- str_remove(remove_url_P, pattern = " N")
+remove_url_USCF_ID <- str_remove(remove_url_N, pattern = " USCF ID")
+#Filter a Vector in R
+remove_url_last <- remove_url_USCF_ID[remove_url_USCF_ID != '']
+```
+
+Once the column information was isolated, it was placed into a data frame.
+
+```{r creating Dataframe}
+
+df <- data.frame(player_name = remove_url_last, state = state, points = points, rating = rating)
+head(df)
+
+```
+
+As shown, there was information that needed correcting in the data frame. In the player names column, some letters where missing which was due to the fact of how the cleaning of the text file was approached in the beginning. The state text information had the extra element of " |". That needed to be removed and in the rating the element "R: " needed removing from the data frame. 
+
+```{r Cleaning the DataFrame}
+
+#Cleaning State by getting ride of " |"
+df_state_cleaning <- str_remove(df$state, pattern = "\\|")
+
+#Cleaning Rate by getting ride of "R: "
+df_rate_cleaning <- str_remove(df$rating, pattern = "R.\\s")
+
+#Cleaning Names in Player Names
+df_player_clean_1 <- str_replace(df$player_name, "ATRICK", "PATRICK")
+df_player_clean_2 <- str_replace(df_player_clean_1, "JOSHUAHILIP", "JOSHUA PHILIP")
+df_player_clean_3 <- str_replace(df_player_clean_2, "AMIYATOSHWNANANDAM", "AMIYATOSH PWNANANDAM")
+df_player_clean_4 <- str_replace(df_player_clean_3, "MIKEIKITIN", "MIKE NIKITIN")
+df_player_clean_5 <- str_replace(df_player_clean_4, "ANVITAO", "ANVIT RAO")
+df_player_clean_6 <- str_replace(df_player_clean_5, "ONALD GRZEGORCZYK", "RONALD GRZEGORCZYK")
+df_player_clean_7 <- str_replace(df_player_clean_6, "DIPANKAROY", "DIPANKAR ROY")
+df_player_clean_8 <- str_replace(df_player_clean_7, "MICHAEL ALDRICH", "MICHAEL R ALDRICH")
+df_player_clean_9 <- str_replace(df_player_clean_8, "ISHI SHETTY", "RISHI SHETTY")
+df_player_clean_10 <- str_replace(df_player_clean_9, "JOEL HENDON", "JOEL R HENDON")
+df_player_clean_11 <- str_replace(df_player_clean_10, "MARISAICCI", "MARISA RICCI")
+
+```
+
+
+Completed clean data frame:
+```{r Final Dataframe}
+df <- data.frame(player_name = df_player_clean_11, state = df_state_cleaning, points = points, rating = df_rate_cleaning)
+
+head(df)
+
+```
+
+To finish off the assignment, the data frame was then written into a .csv file.
+
+```{r wrting the datafarme to a csv}
+write.csv(df, file = "ChessResults.csv")
+```
